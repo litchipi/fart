@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import os
+import json
 from tcp_proxy import HttpProxy, Arguments
 
 class Handler:
@@ -15,11 +16,15 @@ class Handler:
 
     def handle_request(self, header, payload):
         if self.token.encode() in payload:
+            with open("/tmp/fart.header", "w") as f:
+                json.dump(header, f, indent=2)
             with open("/tmp/fart.req", "wb") as f:
                 f.write(payload)
-            os.system(self.editor + " /tmp/fart.req")
+            os.system(self.editor + " /tmp/fart.req /tmp/fart.header")
             with open("/tmp/fart.req", "rb") as f:
                 payload = f.read()
+            with open("/tmp/fart.header", "wb") as f:
+                header = json.load(f)
         return header, payload
 
 if __name__ == '__main__':
@@ -40,4 +45,3 @@ if __name__ == '__main__':
     h = Handler(args.token, args.editor)
     proxy = HttpProxy(h, args.port)
     proxy.loop()
-
