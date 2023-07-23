@@ -10,8 +10,20 @@ class Handler:
             editor = "$EDITOR"
         self.editor = editor
         self.token = token
+        self.expected_response = False
 
     def handle_response(self, header, payload):
+        if self.expected_response:
+            with open("/tmp/fart_reply.header", "w") as f:
+                json.dump(header, f, indent=2)
+            with open("/tmp/fart_reply.req", "wb") as f:
+                f.write(payload)
+            os.system(self.editor + " /tmp/fart_reply.req /tmp/fart_reply.header")
+            with open("/tmp/fart_reply.req", "rb") as f:
+                payload = f.read()
+            with open("/tmp/fart_reply.header", "rb") as f:
+                header = json.load(f)
+            self.expected_response = False
         return header, payload
 
     def handle_request(self, header, payload):
@@ -23,8 +35,9 @@ class Handler:
             os.system(self.editor + " /tmp/fart.req /tmp/fart.header")
             with open("/tmp/fart.req", "rb") as f:
                 payload = f.read()
-            with open("/tmp/fart.header", "wb") as f:
+            with open("/tmp/fart.header", "rb") as f:
                 header = json.load(f)
+            self.expected_response = True
         return header, payload
 
 if __name__ == '__main__':
